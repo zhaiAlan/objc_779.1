@@ -6,7 +6,13 @@
 //
 
 #import <Foundation/Foundation.h>
-
+/*
+struct __AtAutoreleasePool {
+  __AtAutoreleasePool() {atautoreleasepoolobj = objc_autoreleasePoolPush();}
+  ~__AtAutoreleasePool() {objc_autoreleasePoolPop(atautoreleasepoolobj);}
+  void * atautoreleasepoolobj;
+};
+ */
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         // insert code here...
