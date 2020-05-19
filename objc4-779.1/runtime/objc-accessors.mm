@@ -70,33 +70,40 @@ static inline void reallySetProperty(id self, SEL _cmd, id newValue, ptrdiff_t o
 static inline void reallySetProperty(id self, SEL _cmd, id newValue, ptrdiff_t offset, bool atomic, bool copy, bool mutableCopy)
 {
     if (offset == 0) {
+        //设置对象isa
         object_setClass(self, newValue);
         return;
     }
-
+    //声明临时变量oldValue
     id oldValue;
+    //将 self 先强转为字符串指针，然后进行内存平移得到要设置的属性的内存偏移值
     id *slot = (id*) ((char*)self + offset);
-
+    //判断属性是否需要copy操作
     if (copy) {
+        //这一步的目的是拿到 newValue 的副本，然后覆写 newValue，使得传入的 newValue 之后再发生了改变都不会影响到属性值
         newValue = [newValue copyWithZone:nil];
-    } else if (mutableCopy) {
+    } else if (mutableCopy) {//标识符是否需要进行 mutableCopy 操作
+        //newValue 也就是要设置的属性值发送 mutableCopyWithZone 消息
         newValue = [newValue mutableCopyWithZone:nil];
     } else {
         if (*slot == newValue) return;
+        //如果不等，则对新值发送 objc_retain 消息进行 retain 操作，然后将返回值覆写到 newValue 上
         newValue = objc_retain(newValue);
     }
 
     if (!atomic) {
+        //如果不是原子操作，则将属性赋值给临时变量 oldValue，然后将新值赋上去
         oldValue = *slot;
         *slot = newValue;
     } else {
+        //如果是原子操作，则对赋值操作进行加锁操作保证数据完整性，防止赋值过程中数据发生变化，这也就印证了 atomic 是保证属性的读写操作线程安全
         spinlock_t& slotlock = PropertyLocks[slot];
         slotlock.lock();
         oldValue = *slot;
         *slot = newValue;        
         slotlock.unlock();
     }
-
+//最后对 oldValue 也就是旧值进行内存的释放
     objc_release(oldValue);
 }
 

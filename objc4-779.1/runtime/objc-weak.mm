@@ -430,8 +430,11 @@ weak_register_no_lock(weak_table_t *weak_table, id referent_id,
         append_referrer(entry, referrer);
     } 
     else {
+        //创建数组  --
         weak_entry_t new_entry(referent, referrer);
+        //是否需要扩容
         weak_grow_maybe(weak_table);
+        //插入到weak_table 表中
         weak_entry_insert(weak_table, &new_entry);
     }
 
